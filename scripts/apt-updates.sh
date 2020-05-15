@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# apt-base.sh
+# apt-updates.sh
 #=======================================================
 # About: ...
 # Source : https://github.com/saymoncoppi/slide
@@ -42,41 +42,64 @@ function has_command() {
     command -v $1 > /dev/null
 }
 if [ "$UID" -eq "$ROOT_UID" ]; then
-
-# no install recommends
-# https://ubuntu.com/blog/we-reduced-our-docker-images-by-60-with-no-install-recommends
+# autoremove
+# https://www.tecmint.com/disable-lock-blacklist-package-updates-ubuntu-debian-apt/
 echo '
-APT::Install-Recommends "0" ;
-APT::Install-Suggests "0" ;
-Acquire::Languages { "none";
-Apt::AutoRemove::SuggestsImportant "false";
-Acquire::GzipIndexes "true";
-Acquire::CompressionTypes::Order:: "gz";
-DPkg::Post-Invoke { "rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true"; };
-APT::Update::Post-Invoke { "rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true"; };
-Dir::Cache::pkgcache "";
-Dir::Cache::srcpkgcache "";' > /etc/apt/apt.conf.d/01_custom_slide_nocache_norecommends
+APT
+{
+  NeverAutoRemove
+  {
+	"^firmware-linux.*";
+	"^linux-firmware$";
+  };
+  VersionedKernelPackages
+  {
+	# linux kernels
+	"linux-image";
+	"linux-headers";
+	"linux-image-extra";
+	"linux-signed-image";
+	# kfreebsd kernels
+	"kfreebsd-image";
+	"kfreebsd-headers";
+	# hurd kernels
+	"gnumach-image";
+	# (out-of-tree) modules
+	".*-modules";
+	".*-kernel";
+	"linux-backports-modules-.*";
+        # tools
+        "linux-tools";
+  };
+  Never-MarkAuto-Sections
+  {
+	"metapackages";
+	"contrib/metapackages";
+	"non-free/metapackages";
+	"restricted/metapackages";
+	"universe/metapackages";
+	"multiverse/metapackages";
+  };
+  Move-Autobit-Sections
+  {
+	"oldlibs";
+	"contrib/oldlibs";
+	"non-free/oldlibs";
+	"restricted/oldlibs";
+	"universe/oldlibs";
+	"multiverse/oldlibs";
+  };
+};' > /etc/apt/apt.conf.d/01_custom_slide_autoremove
 
+# remove apt-daily from boot
+# https://ubuntu-mate.community/t/shorten-boot-time-apt-daily-service/12297/7
 
-# no docs
-# https://wiki.ubuntu.com/ReducingDiskFootprint#Drop_unnecessary_files
-# https://blog.sleeplessbeastie.eu/2018/09/03/how-to-remove-useless-localizations/
-# remove zoneinfo https://github.com/tianon/docker-brew-debian/issues/48
-# https://raphaelhertzog.com/2010/11/15/save-disk-space-by-excluding-useless-files-with-dpkg/
-echo "
-path-exclude /usr/share/doc/*
-# we need to keep copyright files for legal reasons
-path-include /usr/share/doc/*/copyright
-path-exclude /usr/share/man/*
-path-exclude /usr/share/groff/*
-path-exclude /usr/share/info/*
-# lintian stuff is small, but really unnecessary
-path-exclude /usr/share/lintian/*
-path-exclude /usr/share/linda/*
-path-exclude /usr/share/locale/*
-path-include /usr/share/locale/en*
-" > /etc/dpkg/dpkg.cfg.d/01_custom_slide_nodocs
+# Set security updates to auto
+# https://debian-handbook.info/browse/stable/sect.regular-upgrades.html
+# https://www.hiroom2.com/2016/05/18/ubuntu-16-04-auto-apt-update-and-apt-upgrade/
 
+# remove old kernel using unattended-upgrades
+# https://help.ubuntu.com/community/RemoveOldKernels
 else
 # SUDO CONFIRMATION
 #=======================================================
