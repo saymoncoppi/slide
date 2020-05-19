@@ -1,6 +1,8 @@
 # test for xfscripts
 
- <div> 
-    <object type="text/html" data="http://validator.w3.org/" width="800px" height="600px" style="overflow:auto;border:5px ridge blue">
-    </object>
- </div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+    $("#div1").load("https://github.com/saymoncoppi/pwapk/blob/master/pwapk.sh");
+});
+</script>
